@@ -114,21 +114,7 @@ const generatePropertyDescription = (property?: Record<string, any>) => {
 const getEnumFromValue = (value?: Record<string, any>): any[] | [] =>
   value?.enum || value?.items?.enum || []
 
-// These helpers manage how enum values are displayed:
-//
-// - For enums with 9 or fewer values, all values are shown.
-// - For enums with more than 9 values, only first 5 are shown initially.
-// - A “Show more” button reveals the remaining values.
-const hasLongEnumList = computed(
-  () => getEnumFromValue(optimizedValue.value).length > 9,
-)
-const initialEnumCount = computed(() => (hasLongEnumList.value ? 5 : 9))
-const visibleEnumValues = computed(() =>
-  getEnumFromValue(optimizedValue.value).slice(0, initialEnumCount.value),
-)
-const remainingEnumValues = computed(() =>
-  getEnumFromValue(optimizedValue.value).slice(initialEnumCount.value),
-)
+// Enum values are now displayed using the same Disclosure pattern as object properties
 
 /** Simplified composition with `null` type. */
 const optimizedValue = computed(() => optimizeValueForDisplay(props.value))
@@ -313,58 +299,53 @@ const shouldShowEnumDescriptions = computed(() => {
     <div
       v-if="getEnumFromValue(optimizedValue)?.length > 0 && !isDiscriminator"
       class="property-enum">
-      <template v-if="shouldShowEnumDescriptions">
-        <div class="property-list">
-          <div
-            v-for="enumValue in getEnumFromValue(optimizedValue)"
-            :key="enumValue"
-            class="property">
-            <div class="property-heading">
-              <div class="property-name">
-                {{ enumValue }}
-              </div>
-            </div>
-            <div class="property-description">
-              <ScalarMarkdown
-                :value="optimizedValue?.['x-enumDescriptions']?.[enumValue]" />
-            </div>
-          </div>
-        </div>
-      </template>
-      <template v-else>
-        <ul class="property-enum-values">
-          <li
-            v-for="enumValue in visibleEnumValues"
-            :key="enumValue"
-            class="property-enum-value">
-            <span class="property-enum-value-label">
-              {{ enumValue }}
-            </span>
-          </li>
-          <Disclosure
-            v-if="hasLongEnumList"
-            v-slot="{ open }">
-            <DisclosurePanel>
-              <li
-                v-for="enumValue in remainingEnumValues"
-                :key="enumValue"
-                class="property-enum-value">
-                <span class="property-enum-value-label">
+      <Disclosure
+        v-slot="{ open }"
+        :defaultOpen="false">
+        <div class="schema-properties">
+          <DisclosureButton
+            class="schema-card-title"
+            :class="{ 'schema-card-title--compact': true }">
+            <ScalarIcon
+              class="schema-card-title-icon"
+              :class="{ 'schema-card-title-icon--open': open }"
+              icon="Add"
+              size="sm" />
+            <template v-if="open"> Hide Enum Values </template>
+            <template v-else> Show Enum Values </template>
+          </DisclosureButton>
+          <DisclosurePanel
+            as="ul"
+            :static="false">
+            <li
+              v-for="enumValue in getEnumFromValue(optimizedValue)"
+              :key="enumValue"
+              class="property property--level-1">
+              <SchemaPropertyHeading
+                :value="{
+                  ...optimizedValue,
+                  example: enumValue,
+                  description:
+                    optimizedValue?.['x-enumDescriptions']?.[enumValue],
+                }"
+                :schemas="schemas"
+                :hideModelNames="hideModelNames">
+                <template #name>
                   {{ enumValue }}
-                </span>
-              </li>
-            </DisclosurePanel>
-            <DisclosureButton class="enum-toggle-button">
-              <ScalarIcon
-                class="enum-toggle-button-icon"
-                :class="{ 'enum-toggle-button-icon--open': open }"
-                icon="Add"
-                size="sm" />
-              {{ open ? 'Hide values' : 'Show all values' }}
-            </DisclosureButton>
-          </Disclosure>
-        </ul>
-      </template>
+                </template>
+              </SchemaPropertyHeading>
+              <div
+                v-if="optimizedValue?.['x-enumDescriptions']?.[enumValue]"
+                class="property-description">
+                <ScalarMarkdown
+                  :value="
+                    optimizedValue?.['x-enumDescriptions']?.[enumValue]
+                  " />
+              </div>
+            </li>
+          </DisclosurePanel>
+        </div>
+      </Disclosure>
     </div>
     <!-- Object -->
     <div
@@ -602,9 +583,13 @@ const shouldShowEnumDescriptions = computed(() => {
   background: var(--scalar-background-1);
   border-top: var(--scalar-border-width) solid currentColor;
 }
-.property-enum-values {
+.property-enum-container {
   margin-top: 8px;
+}
+
+.property-enum-values {
   list-style: none;
+  margin: 0;
 }
 
 .property-example {
@@ -635,25 +620,5 @@ const shouldShowEnumDescriptions = computed(() => {
 .property-name {
   font-family: var(--scalar-font-code);
   font-weight: var(--scalar-semibold);
-}
-.enum-toggle-button {
-  align-items: center;
-  border: var(--scalar-border-width) solid var(--scalar-border-color);
-  border-radius: 13.5px;
-  cursor: pointer;
-  color: var(--scalar-color-2);
-  display: flex;
-  font-weight: var(--scalar-semibold);
-  gap: 4px;
-  margin-top: 8px;
-  padding: 6px 10px;
-  user-select: none;
-  white-space: nowrap;
-}
-.enum-toggle-button:hover {
-  color: var(--scalar-color-1);
-}
-.enum-toggle-button-icon--open {
-  transform: rotate(45deg);
 }
 </style>
