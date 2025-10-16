@@ -1,0 +1,32 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalEnv": ["GOCACHE", "LOCALAPPDATA"],
+  "ui": "tui",
+  "tasks": {
+    "lint:fix": {},
+    "build": {
+      "outputs": ["dist/**", "storybook-static/**", ".output", ".nuxt"],
+      "dependsOn": ["^build"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["^build"]
+    },
+    "playground": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["^build"]
+    },
+    "playground:modal": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["^build"]
+    },
+    "playground:web": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": ["^build"]
+    }
+  }
+}
