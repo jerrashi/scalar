@@ -1,1 +1,0 @@
-export { useScalarIcon } from './useScalarIcon'
